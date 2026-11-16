@@ -41,6 +41,13 @@ function doPost(e) {
       catch (err) { return json_({ ok: false, error: String(err.message || err) }); }
       finally { lock.releaseLock(); }
     }
+    case 'deleteWeek': {
+      const lock = LockService.getScriptLock();
+      lock.waitLock(20000);
+      try { return json_(deleteWeek_(req)); }
+      catch (err) { return json_({ ok: false, error: String(err.message || err) }); }
+      finally { lock.releaseLock(); }
+    }
   }
   return json_({ ok: false, error: 'Unknown action.' });
 }
@@ -83,6 +90,44 @@ function saveWeek_(req) {
   buildCalculations_(ss);
   SpreadsheetApp.flush();
   return { ok: true, week, season: req.season || 'CY', traps: written, savedAt: new Date().toISOString() };
+}
+
+/**
+ * req = { season: 'CY'|'PY', week: 47 }
+ * Clears that week's trap counts and (current season) its 7-day outlook. The "Week N" column header stays.
+ * If it was the report's current week, the current week moves to the latest week that still has counts.
+ */
+function deleteWeek_(req) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const week = Number(req.week);
+  if (!(week >= 1 && week <= 53 && Math.floor(week) === week)) throw new Error('Week must be a whole number from 1 to 53.');
+  const sh = ss.getSheetByName(req.season === 'PY' ? TABS.py : TABS.cy);
+  const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  const col = head.indexOf('Week ' + week) + 1;
+  let cleared = 0;
+  if (col > 0 && sh.getLastRow() > 1) {
+    const rng = sh.getRange(2, col, sh.getLastRow() - 1, 1);
+    cleared = rng.getValues().filter(r => r[0] !== '').length;
+    rng.clearContent();
+  }
+  let outlookRows = 0, current = null;
+  if (req.season !== 'PY') {
+    const fc = ensureForecastWeekColumn_(ss), last = fc.getLastRow();
+    if (last > 1) {
+      const weeks = fc.getRange(2, 1, last - 1, 1).getValues();
+      for (let i = weeks.length - 1; i >= 0; i--) if (Number(weeks[i][0]) === week) { fc.deleteRow(i + 2); outlookRows++; }
+    }
+    if (Number(getSetting_(ss, 'Current Week')) === week) {
+      const data = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+      const withData = data[0].map((h, i) => ({ m: /^Week (\d+)$/.exec(String(h)), i }))
+        .filter(x => x.m && data.slice(1).some(r => typeof r[x.i] === 'number')).map(x => Number(x.m[1]));
+      current = withData.length ? Math.max.apply(null, withData) : '';
+      setSetting_(ss, 'Current Week', current);
+    }
+  }
+  buildCalculations_(ss);
+  SpreadsheetApp.flush();
+  return { ok: true, week, season: req.season || 'CY', cleared, outlookRows, currentWeek: current };
 }
 
 function ensureWeekColumn_(sh, week) {

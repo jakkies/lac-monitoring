@@ -149,6 +149,9 @@
     initial = isNew ? "" : snapshot();
     renderSummary();
     $("#saveBtn").textContent = isNew ? `Add week ${week}` : `Save week ${week}`;
+    $("#deleteBtn").hidden = isNew || !WRITE_URL;
+    $("#deleteTxt").textContent = `Delete week ${week}`;
+    $("#deleteBtn").setAttribute("aria-label", `Delete week ${week}`);
   }
 
   /* ---------------- validation & save ---------------- */
@@ -171,6 +174,18 @@
     const form = readForm(), errs = validate(form), st = $("#status");
     if (errs.length) { st.className = "savebar__status is-error"; st.textContent = errs[0] + (errs.length > 1 ? ` (+${errs.length - 1} more)` : ""); return; }
     if (!WRITE_URL) { toast("Saving isn't connected yet – see the notice at the top.", true); return; }
+    // Guard: saving would blank counts that already have data in the sheet
+    const existing = isNew ? [] : form.counts.filter(c => { const r = rows().find(x => x.Pest === c.pest && x["Trap No"] === c.trap); return r && isNum(val(r, week)) && c.value === null; });
+    if (existing.length && !e.confirmed) {
+      const w = week;
+      confirmDlg({
+        title: `Clear ${existing.length} existing count${existing.length === 1 ? "" : "s"} in Week ${w}?`,
+        body: `Saving will remove ${existing.length} trap count${existing.length === 1 ? "" : "s"} that already ${existing.length === 1 ? "has" : "have"} data for week ${w} (${existing.slice(0, 6).map(c => c.pest + " " + c.trap).join(", ")}${existing.length > 6 ? "…" : ""}). Only continue if those traps really weren't read.`,
+        okText: "Save anyway", busyText: "Saving…",
+        onOk: async () => { $("#delDlg").close(); await save({ preventDefault() {}, confirmed: true }); }
+      });
+      return;
+    }
     saving = true; $("#saveBtn").disabled = true; st.className = "savebar__status"; st.textContent = "Saving…";
     const setCurrent = season === "CY" && $("#setCurrent").checked;
     try {
@@ -195,6 +210,43 @@
     const t = $("#toast"); t.className = "toast" + (isErr ? " is-error" : "");
     t.innerHTML = esc(msg) + (link ? `<a href="${link}">View report →</a>` : ""); t.hidden = false;
     clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 6000);
+  }
+
+  /* ---------------- confirm dialog (delete + overwrite guard) ---------------- */
+  // opts: { title, body, okText, onOk: async () => {} }  – onOk may throw; the message shows in the dialog.
+  function confirmDlg(opts) {
+    const dlg = $("#delDlg"), ok = $("#delConfirm"), msg = $("#delMsg");
+    $("#delTitle").textContent = opts.title; $("#delBody").textContent = opts.body;
+    ok.textContent = opts.okText; ok.disabled = false; msg.textContent = "";
+    ok.onclick = async () => {
+      ok.disabled = true; ok.textContent = opts.busyText || "Working…"; msg.textContent = "";
+      try { await opts.onOk(); if (dlg.open) dlg.close(); }
+      catch (err) { msg.textContent = err.message; }
+      finally { ok.disabled = false; ok.textContent = opts.okText; }
+    };
+    dlg.showModal();
+  }
+
+  function askDelete() {
+    if (isNew || week == null) return;
+    const w = week, n = rows().filter(r => isNum(val(r, w))).length;
+    const fcN = season === "CY" ? DATA.forecast.filter(f => f.Week === w).length : 0;
+    confirmDlg({
+      title: `Are you sure you want to delete Week ${w}?`,
+      body: `This removes ${n} trap count${n === 1 ? "" : "s"}${fcN ? ` and the ${fcN}-day blight & temperature outlook` : ""} for week ${w} (${seasonLabel(season)}) from the Google Sheet, and the report will no longer show it. A copy stays in the sheet's version history (File → Version history).`,
+      okText: `Delete week ${w}`, busyText: "Deleting…",
+      onOk: async () => {
+        const res = await api("deleteWeek", { season, week: w });
+        if (res.auth === false) { $("#delDlg").close(); lock("Your session expired – enter the passcode again."); return; }
+        if (!res.ok) throw new Error("Not deleted: " + (res.error || "unknown error"));
+        rows().forEach(r => { delete r[`Week ${w}`]; });
+        if (season === "CY") DATA.forecast = DATA.forecast.filter(f => f.Week !== w);
+        if (res.currentWeek != null && res.currentWeek !== "") DATA.settings["Current Week"] = res.currentWeek;
+        week = null; isNew = false; initial = "";
+        renderAll();
+        toast(`Week ${w} deleted.`);
+      }
+    });
   }
 
   /* ---------------- gate ---------------- */
@@ -266,6 +318,7 @@
       const prev = season;
       guard(() => { season = e.target.value; week = null; isNew = false; }, () => { document.querySelector(`input[name="season"][value="${prev}"]`).checked = true; });
     }));
+    $("#deleteBtn").addEventListener("click", askDelete);
     $("#resetBtn").addEventListener("click", () => { if (isNew) { isNew = false; week = null; } renderAll(); });
     addEventListener("beforeunload", e => { if (!$("#editor").hidden && dirty()) { e.preventDefault(); e.returnValue = ""; } });
   }

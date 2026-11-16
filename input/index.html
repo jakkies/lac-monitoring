@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css?v=202611161346">
-<link rel="stylesheet" href="input.css?v=202611161346">
+<link rel="stylesheet" href="../styles.css?v=202611161415">
+<link rel="stylesheet" href="input.css?v=202611161415">
 </head>
 <body class="admin">
 <a class="skip" href="#main">Skip to form</a>
@@ -68,6 +68,10 @@
         <input id="newWeek" type="number" inputmode="numeric" min="1" max="53" step="1">
       </label>
       <p class="toolbar__state" id="modeTxt"></p>
+      <button class="btn btn--danger" type="button" id="deleteBtn" hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="deleteTxt">Delete week</span>
+      </button>
     </div>
 
     <div class="cols">
@@ -105,10 +109,25 @@
   <p class="foot small muted">Changes are saved to the shared Google Sheet. The report picks them up within a few seconds.</p>
 </main>
 
+<dialog class="modal" id="delDlg" aria-labelledby="delTitle" aria-describedby="delBody">
+  <form method="dialog" class="modal__inner">
+    <div class="modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 id="delTitle">Are you sure you want to delete Week #?</h2>
+    <p id="delBody"></p>
+    <p class="formmsg" id="delMsg" role="alert"></p>
+    <div class="modal__actions">
+      <button class="btn btn--ghost" value="cancel" id="delCancel" autofocus>Cancel</button>
+      <button class="btn btn--danger btn--solid" type="button" id="delConfirm">Delete week</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="../config.js?v=202611161346"></script>
-<script src="../lib.js?v=202611161346"></script>
-<script src="admin.js?v=202611161346"></script>
+<script src="../config.js?v=202611161415"></script>
+<script src="../lib.js?v=202611161415"></script>
+<script src="admin.js?v=202611161415"></script>
 </body>
 </html>
