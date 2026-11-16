@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LAC Data Input</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#085C34">
+<link rel="icon" href="../logo-badge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css?v=202611161332">
+<link rel="stylesheet" href="input.css?v=202611161332">
+</head>
+<body class="admin">
+<a class="skip" href="#main">Skip to form</a>
+
+<header class="hero hero--slim">
+  <div class="hero__rows" aria-hidden="true"></div>
+  <div class="wrap hero__inner">
+    <div class="brand">
+      <img class="brand__badge" src="../logo-badge.png" alt="Laeveld Agrochem, since 1991" width="56" height="56">
+      <div>
+        <p class="eyebrow">Admin · Laeveld Agrochem</p>
+        <h1>Weekly data input</h1>
+        <p class="hero__meta" id="who">Monitoring Report</p>
+      </div>
+    </div>
+    <div class="hero__actions">
+      <a class="iconbtn" href="../" title="Open the report" aria-label="Open the report">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </a>
+      <button class="iconbtn" id="lockBtn" type="button" title="Lock" aria-label="Lock the input page" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <!-- Gate: passcode -->
+  <section id="gate" class="gate card" hidden>
+    <h2 class="section__title" id="gateTitle">Unlock data input</h2>
+    <p class="card__sub" id="gateSub">Enter the admin passcode to add or edit weekly data.</p>
+    <form id="gateForm" class="gate__form" autocomplete="off">
+      <label class="field"><span>Passcode</span><input type="password" id="pass1" autocomplete="current-password" required minlength="8"></label>
+      <label class="field" id="pass2wrap" hidden><span>Confirm passcode</span><input type="password" id="pass2" autocomplete="new-password" minlength="8"></label>
+      <button class="btn btn--primary" type="submit" id="gateBtn">Unlock</button>
+      <p class="formmsg" id="gateMsg" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="notice" class="notice" hidden></section>
+
+  <!-- Editor -->
+  <form id="editor" class="editor" hidden novalidate>
+    <div class="toolbar card">
+      <div class="seg" role="radiogroup" aria-label="Season">
+        <label><input type="radio" name="season" value="CY" checked><span id="segCY">2026</span></label>
+        <label><input type="radio" name="season" value="PY"><span id="segPY">2025</span></label>
+      </div>
+      <label class="field field--inline"><span>Week</span>
+        <select id="weekSel"></select>
+      </label>
+      <label class="field field--inline" id="newWeekWrap" hidden><span>New week no.</span>
+        <input id="newWeek" type="number" inputmode="numeric" min="1" max="53" step="1">
+      </label>
+      <p class="toolbar__state" id="modeTxt"></p>
+    </div>
+
+    <div class="cols">
+      <div class="cols__main">
+        <section class="section" aria-labelledby="h-traps">
+          <h2 class="section__title" id="h-traps">Trap counts <span class="muted" id="trapsWeek"></span></h2>
+          <p class="hint">Enter each trap's moth count. Leave a trap blank if it was not read. The grey number is last week's count.</p>
+          <div class="grid2" id="trapGroups"></div>
+        </section>
+
+        <section class="section" aria-labelledby="h-fc" id="fcSection">
+          <h2 class="section__title" id="h-fc">Blight risk &amp; temperature <span class="muted">· 7-day outlook</span></h2>
+          <p class="hint">Change the first date and the other days follow. Temperatures are in °C.</p>
+          <div class="card card--flush">
+            <div class="fcin" id="fcRows" role="table" aria-label="7-day outlook"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="cols__side" aria-label="Live calculations">
+        <div class="card summary" id="summary"></div>
+      </aside>
+    </div>
+
+    <div class="savebar">
+      <div class="wrap savebar__inner">
+        <label class="check"><input type="checkbox" id="setCurrent" checked> <span>Show this week first in the report</span></label>
+        <p class="savebar__status" id="status" aria-live="polite"></p>
+        <button class="btn btn--ghost" type="button" id="resetBtn">Discard changes</button>
+        <button class="btn btn--primary" type="submit" id="saveBtn">Save week</button>
+      </div>
+    </div>
+  </form>
+
+  <p class="foot small muted">Changes are saved to the shared Google Sheet. The report picks them up within a few seconds.</p>
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="../config.js?v=202611161332"></script>
+<script src="../lib.js?v=202611161332"></script>
+<script src="admin.js?v=202611161332"></script>
+</body>
+</html>

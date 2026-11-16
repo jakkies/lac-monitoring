@@ -1,10 +1,7 @@
 /* LAC Monitoring Report – renders the weekly report from Google Sheets (or the bundled snapshot). */
 (() => {
   "use strict";
-  const CFG = window.LAC_CONFIG || {};
-  const TABS = CFG.TABS || { settings: "Settings", cy: "Counts CY", py: "Counts PY", forecast: "Forecast" };
-  const qs = new URLSearchParams(location.search);
-  const SHEET_ID = (qs.get("sheet") || CFG.SHEET_ID || (qs.get("csv") ? "local-test" : "")).trim();
+  const { CFG, SHEET_ID, qs, loadLive, isNum, val, weekStats, change } = window.LACData;
   const PESTS = {
     PTM: { name: "PTM", long: "Potato tuber moth", color: "var(--ptm)", soft: "var(--ptm-soft)" },
     TA: { name: "TA", long: "Tuta absoluta", color: "var(--ta)", soft: "var(--ta-soft)" }
@@ -17,81 +14,15 @@
 
   let DATA = null, WEEK = null, SOURCE = "snapshot", showPY = { PTM: false, TA: false }, showTable = { PTM: false, TA: false };
 
-  /* ---------- data loading ---------- */
-  function parseCSV(text) {
-    const rows = []; let row = [], cell = "", q = false;
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (q) {
-        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
-        else cell += c;
-      } else if (c === '"') q = true;
-      else if (c === ",") { row.push(cell); cell = ""; }
-      else if (c === "\n" || c === "\r") {
-        if (c === "\r" && text[i + 1] === "\n") i++;
-        row.push(cell); rows.push(row); row = []; cell = "";
-      } else cell += c;
-    }
-    if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
-    const head = (rows.shift() || []).map(h => h.trim());
-    return rows.filter(r => r.some(v => v.trim() !== "")).map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
-  }
-  const norm = v => {
-    if (v == null) return null;
-    if (typeof v === "number") return v;
-    const s = String(v).trim();
-    if (s === "") return null;
-    const n = Number(s.replace(/\s/g, "").replace(/,(?=\d{1,2}$)/, "."));
-    return Number.isFinite(n) ? n : s;
-  };
-  async function fetchTab(tab) {
-    const url = qs.get("csv") ? `${qs.get("csv")}/${encodeURIComponent(tab)}.csv` : `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SHEET_ID)}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(tab)}&_=${Date.now()}`;
-    const r = await fetch(url, { cache: "no-store" });
-    if (!r.ok) throw new Error(`${tab}: HTTP ${r.status}`);
-    const t = await r.text();
-    if (/^\s*</.test(t)) throw new Error(`${tab}: sheet is not shared publicly`);
-    return parseCSV(t);
-  }
-  function shapeRows(rows) {
-    return rows.map(r => {
-      const o = {};
-      for (const [k, v] of Object.entries(r)) o[k.trim()] = k === "Client" || k === "Pest" ? String(v).trim() : norm(v);
-      return o;
-    }).filter(r => r["Trap No"] != null && r.Pest);
-  }
-  async function loadLive() {
-    const [s, cy, py, fc] = await Promise.all([TABS.settings, TABS.cy, TABS.py, TABS.forecast].map(fetchTab));
-    const settings = {};
-    if (s.length && "Setting" in s[0]) s.forEach(r => settings[r.Setting.trim()] = norm(r.Value));
-    else Object.entries(s[0] || {}).forEach(([k, v]) => settings[k.trim()] = norm(v));
-    return {
-      settings, cy: shapeRows(cy), py: shapeRows(py),
-      forecast: fc.map(r => ({ Date: String(r.Date || "").trim(), "Blight Early": String(r["Blight Early"] ?? "").trim(), "Blight Late": String(r["Blight Late"] ?? "").trim(), "Temp Min": norm(r["Temp Min"]), "Temp Max": norm(r["Temp Max"]) })).filter(r => r.Date)
-    };
-  }
-
   /* ---------- calculations (mirror the workbook) ---------- */
-  const isNum = v => typeof v === "number" && Number.isFinite(v);
-  const val = (row, w) => row ? row[`Week ${w}`] ?? null : null;
   function traps(pest, w) {
     const py = DATA.py.filter(r => r.Pest === pest);
     return DATA.cy.filter(r => r.Pest === pest).sort((a, b) => a["Trap No"] - b["Trap No"]).map(r => ({
       trap: r["Trap No"], client: r.Client, cy: val(r, w), py: val(py.find(p => p["Trap No"] === r["Trap No"]), w)
     }));
   }
-  function weekStats(rows, pest, w) {
-    const nums = rows.filter(r => r.Pest === pest).map(r => val(r, w)).filter(isNum);
-    if (!nums.length) return { total: null, avg: null, n: 0, max: null };
-    const total = nums.reduce((a, b) => a + b, 0);
-    return { total, avg: Math.round(total / nums.length), n: nums.length, max: Math.max(...nums) };
-  }
+  const weeksWithData = () => window.LACData.weeksWithData(DATA.cy);
   const threshold = pest => Number(DATA.settings[`${pest} Threshold`]) || 600;
-  const weeksWithData = () => {
-    const s = new Set();
-    DATA.cy.forEach(r => Object.keys(r).forEach(k => { const m = /^Week (\d+)$/.exec(k); if (m && isNum(r[k])) s.add(+m[1]); }));
-    return [...s].sort((a, b) => a - b);
-  };
-  const change = (a, b) => (isNum(a) && isNum(b) && a !== 0) ? (b - a) / a : null;
   function linreg(pts) {
     const p = pts.filter(q => isNum(q.y)); if (p.length < 2) return null;
     const n = p.length, sx = p.reduce((a, q) => a + q.x, 0), sy = p.reduce((a, q) => a + q.y, 0);
@@ -364,8 +295,9 @@
     return `<span class="lvl lvl--${cls}">${esc(s && s !== "-" ? s : "–")}</span>`;
   }
   function renderForecast() {
-    const f = DATA.forecast || [], card = $("#forecast");
-    if (!f.length) { card.innerHTML = `<p class="fc__note">No forecast entered.</p>`; return; }
+    const all = DATA.forecast || [], card = $("#forecast");
+    const f = all.some(r => isNum(r.Week)) ? all.filter(r => r.Week === WEEK) : all;
+    if (!f.length) { card.innerHTML = `<p class="fc__note">No blight risk or temperature outlook has been entered for week ${WEEK}.</p>`; return; }
     const tmin = Math.min(...f.map(r => r["Temp Min"]).filter(isNum)) - 2, tmax = Math.max(...f.map(r => r["Temp Max"]).filter(isNum)) + 2;
     card.innerHTML = `<div class="fc" role="list">${f.map(r => {
       const d = parseDate(r.Date), lo = r["Temp Min"], hi = r["Temp Max"];

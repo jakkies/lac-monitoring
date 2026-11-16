@@ -11,5 +11,7 @@
 window.LAC_CONFIG = {
   SHEET_ID: "1Foiaat2aS6jGKyyPdpHdG-2uKQL55KAPuB58oAOxshk",
   TABS: { settings: "Settings", cy: "Counts CY", py: "Counts PY", forecast: "Forecast" },
-  REFRESH_MINUTES: 10
+  REFRESH_MINUTES: 10,
+  // Web-app URL of the Apps Script in apps-script/Code.gs – enables saving on /input
+  WRITE_URL: ""
 };
