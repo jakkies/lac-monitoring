@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LAC Monitoring Report</title>
+<meta name="description" content="Laeveld Agrochem weekly pest-trap monitoring report – PTM and Tuta absoluta counts, trends and blight outlook.">
+<meta name="theme-color" content="#085C34">
+<link rel="icon" href="logo-badge.png">
+<link rel="apple-touch-icon" href="logo-badge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to report</a>
+
+<header class="hero">
+  <div class="hero__rows" aria-hidden="true"></div>
+  <div class="wrap hero__inner">
+    <div class="brand">
+      <img class="brand__badge" src="logo-badge.png" alt="Laeveld Agrochem, since 1991" width="64" height="64">
+      <div>
+        <p class="eyebrow" id="company">Laeveld Agrochem</p>
+        <h1 id="title">Monitoring Report</h1>
+        <p class="hero__meta"><span id="region">Tarlton</span><span class="dot" aria-hidden="true">•</span><span id="rep">Carl van Heerden</span></p>
+      </div>
+    </div>
+    <div class="hero__actions">
+      <button class="iconbtn" id="themeBtn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="iconbtn" id="printBtn" type="button" aria-label="Print or save as PDF" title="Print / save as PDF">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="weekbar" id="weekbar">
+  <div class="wrap weekbar__inner">
+    <div class="weekpicker" role="group" aria-label="Report week">
+      <button class="iconbtn iconbtn--sm" id="prevWeek" type="button" aria-label="Previous week">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <label class="sr" for="weekSel">Report week</label>
+      <select id="weekSel"></select>
+      <button class="iconbtn iconbtn--sm" id="nextWeek" type="button" aria-label="Next week">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <nav class="tabs" aria-label="Report sections">
+      <a href="#overview" class="is-active">Overview</a>
+      <a href="#traps">Traps</a>
+      <a href="#trends">Trends</a>
+      <a href="#outlook">Outlook</a>
+    </nav>
+    <p class="source" id="source" aria-live="polite"><span class="source__dot"></span><span class="source__txt">Loading…</span></p>
+  </div>
+</div>
+
+<main id="main" class="wrap">
+
+  <section id="overview" class="section" aria-labelledby="ov-h">
+    <h2 id="ov-h" class="section__title">Week <span data-week></span> at a glance</h2>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section id="traps" class="section" aria-labelledby="tr-h">
+    <h2 id="tr-h" class="section__title">Trap counts <span class="muted">· week <span data-week></span></span></h2>
+    <div class="grid2">
+      <article class="card" id="card-PTM"></article>
+      <article class="card" id="card-TA"></article>
+    </div>
+  </section>
+
+  <section id="trends" class="section" aria-labelledby="tn-h">
+    <h2 id="tn-h" class="section__title">Weekly average trend</h2>
+    <div class="grid2 grid2--trend">
+      <article class="card" id="trend-PTM"></article>
+      <article class="card" id="trend-TA"></article>
+    </div>
+    <div class="grid2 grid2--split">
+      <article class="card" id="ratio"></article>
+      <article class="card" id="movement"></article>
+    </div>
+  </section>
+
+  <section id="outlook" class="section" aria-labelledby="ol-h">
+    <h2 id="ol-h" class="section__title">7-day blight risk &amp; temperature</h2>
+    <article class="card card--flush" id="forecast"></article>
+  </section>
+
+  <footer class="foot">
+    <img src="logo.png" alt="Laeveld Agrochem" width="175" height="50" class="foot__logo">
+    <p>Crop solutions that ensure optimal yields. <span class="muted">Together cultivating success.</span></p>
+    <p class="muted small">PTM = Potato tuber moth · TA = <i>Tuta absoluta</i> · CY = current season · PY = previous season. <span id="srcFoot"></span></p>
+  </footer>
+</main>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script src="config.js"></script>
+<script src="data/snapshot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
