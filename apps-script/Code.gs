@@ -115,6 +115,7 @@ function saveForecast_(ss, week, rows) {
   if (clean.length) {
     const start = sh.getLastRow() + 1;
     sh.getRange(start, 1, clean.length, 6).setValues(clean);
+    sh.getRange(start, 1, clean.length, 1).setNumberFormat('0');
     sh.getRange(start, 2, clean.length, 1).setNumberFormat('yyyy-mm-dd');
   }
   // keep the tab sorted by week, then date
@@ -154,7 +155,7 @@ function buildCalculations_(ss) {
     const base = rows.length + 2;  // sheet row of the first metric in this block
     const r = { total: base, n: base + 1, avg: base + 2, mov: base + 3, diff: base + 4, dir: base + 5, diffp: base + 6, over: base + 7 };
     const L = (h) => colOf(h);
-    rows.push([`${pest} Total (${tag})`, (c, h) => L(h) ? `=SUMIFS(${S}!${L(h)}$2:${L(h)},${S}!$B$2:$B,"${pest}")` : '', '#,##0']);
+    rows.push([`${pest} Total (${tag})`, (c, h) => L(h) ? `=IF(COUNTIFS(${S}!$B$2:$B,"${pest}",${S}!${L(h)}$2:${L(h)},">=0")=0,"",SUMIFS(${S}!${L(h)}$2:${L(h)},${S}!$B$2:$B,"${pest}"))` : '', '#,##0']);
     rows.push([`${pest} Traps read (${tag})`, (c, h) => L(h) ? `=COUNTIFS(${S}!$B$2:$B,"${pest}",${S}!${L(h)}$2:${L(h)},">=0")` : '', '0']);
     rows.push([`${pest} Weekly Avg. Count (${tag})`, (c, h) => L(h) ? `=IFERROR(ROUND(AVERAGEIFS(${S}!${L(h)}$2:${L(h)},${S}!$B$2:$B,"${pest}"),0),"")` : '', '#,##0']);
     rows.push([`${pest} Weekly % Movement (${tag})`, (c, h, p) => p ? `=IFERROR((${c}${r.avg}-${p}${r.avg})/${p}${r.avg},"")` : '', '0.00%']);
@@ -201,6 +202,7 @@ function buildCalculations_(ss) {
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const fc = ensureForecastWeekColumn_(ss);
+  fc.getRange('A2:A1000').setNumberFormat('0');
   const riskRule = SpreadsheetApp.newDataValidation().requireValueInList(RISK, true).setAllowInvalid(false).build();
   fc.getRange('C2:D1000').setDataValidation(riskRule);
   fc.getRange('B2:B1000').setNumberFormat('yyyy-mm-dd');
