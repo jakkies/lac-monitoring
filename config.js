@@ -13,5 +13,5 @@ window.LAC_CONFIG = {
   TABS: { settings: "Settings", cy: "Counts CY", py: "Counts PY", forecast: "Forecast" },
   REFRESH_MINUTES: 10,
   // Web-app URL of the Apps Script in apps-script/Code.gs – enables saving on /input
-  WRITE_URL: ""
+  WRITE_URL: "https://script.google.com/macros/s/AKfycbywIxCokS52mebf5sn_rrEYbsnHhvY8UP33sSQDuW5-2Q038akNcDfDpyn8h3KL8ya6SA/exec"
 };
