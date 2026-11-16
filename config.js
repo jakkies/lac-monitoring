@@ -9,7 +9,7 @@
  * Leave it empty to run on the bundled Week 46 snapshot.
  */
 window.LAC_CONFIG = {
-  SHEET_ID: "",
+  SHEET_ID: "1Foiaat2aS6jGKyyPdpHdG-2uKQL55KAPuB58oAOxshk",
   TABS: { settings: "Settings", cy: "Counts CY", py: "Counts PY", forecast: "Forecast" },
   REFRESH_MINUTES: 10
 };
