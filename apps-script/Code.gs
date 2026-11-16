@@ -206,8 +206,8 @@ function setup() {
   const riskRule = SpreadsheetApp.newDataValidation().requireValueInList(RISK, true).setAllowInvalid(false).build();
   fc.getRange('C2:D1000').setDataValidation(riskRule);
   fc.getRange('B2:B1000').setNumberFormat('yyyy-mm-dd');
-  const numRule = SpreadsheetApp.newDataValidation().requireNumberBetween(0, 100000).setAllowInvalid(false)
-    .setHelpText('Trap count: a whole number, or leave blank if the trap was not read.').build();
+  const numRule = SpreadsheetApp.newDataValidation().requireFormulaSatisfied('=OR(D2="",D2="*",AND(ISNUMBER(D2),D2>=0,D2<=100000))').setAllowInvalid(false)
+    .setHelpText('Trap count: a whole number, * if the trap was not read, or leave blank.').build();
   [TABS.cy, TABS.py].forEach(n => {
     const sh = ss.getSheetByName(n);
     sh.getRange(2, 4, sh.getLastRow() - 1, sh.getLastColumn() - 3).setDataValidation(numRule);
